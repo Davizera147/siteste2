@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Debug — Central de Testes de Componentes</title>
+<meta name="description" content="Página de testes com componentes comuns de sites para avaliação: contato, mídia, comércio, interatividade, marketing e SEO.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%233454D1'/%3E%3Cpath d='M25 52l18 18 32-38' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3F4F7;
+    --surface:#FFFFFF;
+    --ink:#181B22;
+    --muted:#6B7280;
+    --border:#E2E5EA;
+    --accent:#3454D1;
+    --accent-dark:#2740A8;
+    --pass:#1E8E5A;
+    --pass-bg:#E8F5EE;
+    --fail:#C4432B;
+    --fail-bg:#FCECE8;
+    --amber:#B98900;
+    --sans:'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+    --mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;font-size:15px;}
+  h1,h2,h3,h4{margin:0;font-family:var(--sans);}
+  p{margin:0;}
+  img{max-width:100%;display:block;}
+  button{font-family:var(--sans);cursor:pointer;}
+  input,textarea,select{font-family:var(--sans);}
+  a{color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  /* ===== HEADER / TABS ===== */
+  .app-header{position:sticky; top:0; z-index:30; background:var(--surface); border-bottom:1px solid var(--border);}
+  .app-header .top{display:flex; align-items:center; justify-content:space-between; padding:18px 28px 10px; flex-wrap:wrap; gap:12px;}
+  .app-title{font-weight:700; font-size:1.15rem;}
+  .app-title span{color:var(--accent);}
+  .app-sub{font-size:0.82rem; color:var(--muted); margin-top:2px;}
+  .progress-pill{font-family:var(--mono); font-size:0.78rem; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:7px 14px; white-space:nowrap;}
+  .tabs{display:flex; gap:4px; padding:14px 28px 0; overflow-x:auto;}
+  .tab-btn{padding:10px 18px; border-radius:8px 8px 0 0; border:1px solid transparent; background:none; font-size:0.88rem; font-weight:600; color:var(--muted); white-space:nowrap;}
+  .tab-btn .count{font-family:var(--mono); font-size:0.76rem; margin-left:6px; opacity:0.8;}
+  .tab-btn.active{color:var(--accent); border-color:var(--border); border-bottom-color:var(--surface); background:var(--surface); position:relative; top:1px;}
+
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .panel-inner{max-width:1180px; margin:0 auto; padding:32px 28px 90px;}
+
+  /* ===== CATEGORY / GRID ===== */
+  .category-head{margin:44px 0 16px; font-size:1.05rem; font-weight:700; display:flex; align-items:center; gap:10px; color:var(--ink);}
+  .category-head:first-child{margin-top:4px;}
+  .category-head .cat-icon{width:22px; height:22px; stroke:var(--accent); fill:none; stroke-width:1.6;}
+  .tests-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:18px;}
+  @media (max-width:820px){ .tests-grid{grid-template-columns:1fr;} }
+
+  .test-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; transition:box-shadow .2s ease;}
+  .test-card.is-pass{box-shadow:inset 3px 0 0 var(--pass);}
+  .test-card.is-fail{box-shadow:inset 3px 0 0 var(--fail);}
+  .test-head{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); background:#FAFBFC;}
+  .test-title{font-weight:600; font-size:0.94rem; line-height:1.4;}
+  .test-num{font-family:var(--mono); font-size:0.72rem; color:var(--muted); margin-right:6px;}
+  .test-controls{display:flex; gap:6px; flex-shrink:0;}
+  .chk{width:28px; height:28px; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:0.9rem; line-height:1; display:flex; align-items:center; justify-content:center; color:var(--muted);}
+  .chk-pass:hover{border-color:var(--pass); color:var(--pass);}
+  .chk-fail:hover{border-color:var(--fail); color:var(--fail);}
+  .test-card.is-pass .chk-pass{background:var(--pass); border-color:var(--pass); color:#fff;}
+  .test-card.is-fail .chk-fail{background:var(--fail); border-color:var(--fail); color:#fff;}
+  .test-body{padding:18px 16px; flex:1;}
+  .test-note{padding:0 16px 16px; display:none;}
+  .test-card.is-fail .test-note{display:block;}
+  .test-note textarea{width:100%; min-height:64px; border:1px solid var(--border); border-radius:6px; padding:9px 10px; font-size:0.85rem; resize:vertical;}
+  .test-note .note-hint{font-size:0.72rem; color:var(--muted); margin-top:4px;}
+  .test-hint{font-size:0.78rem; color:var(--muted); margin-top:10px; line-height:1.5;}
+
+  /* ===== SUMMARY TABS ===== */
+  .summary-group{margin-bottom:30px;}
+  .summary-group h3{font-size:0.78rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:10px;}
+  .summary-item{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; background:var(--surface); font-size:0.92rem;}
+  .summary-item.fail-item{flex-direction:column; align-items:stretch; gap:8px;}
+  .summary-item .fail-note{font-size:0.84rem; color:var(--ink); background:var(--fail-bg); border-radius:6px; padding:8px 10px;}
+  .summary-item .fail-note.empty{color:var(--muted); font-style:italic; background:transparent; padding:0;}
+  .summary-badge{font-size:0.7rem; font-family:var(--mono); padding:2px 8px; border-radius:999px;}
+  .summary-badge.pass{background:var(--pass-bg); color:var(--pass);}
+  .summary-badge.fail{background:var(--fail-bg); color:var(--fail);}
+  .summary-empty{color:var(--muted); font-size:0.94rem; padding:60px 0; text-align:center;}
+
+  /* ===== GENERIC UI BITS reused across demos ===== */
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:7px; border:1px solid var(--border); background:var(--surface); font-size:0.88rem; font-weight:600; color:var(--ink); text-decoration:none;}
+  .btn-accent{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .btn-accent:hover{background:var(--accent-dark);}
+  .btn-whatsapp{background:#25D366; border-color:#25D366; color:#fff;}
+  .btn-block{width:100%; justify-content:center;}
+  .field-row{margin-bottom:10px;}
+  .field-row label{display:block; font-size:0.8rem; color:var(--muted); margin-bottom:4px;}
+  .field-row input, .field-row textarea, .field-row select{width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.88rem;}
+  iframe{border:0; width:100%; border-radius:6px;}
+  .code-block{background:#181B22; color:#D7DCE5; font-family:var(--mono); font-size:0.78rem; padding:14px; border-radius:8px; overflow-x:auto; white-space:pre; line-height:1.6; margin-top:8px;}
+  .status-line{display:flex; align-items:center; gap:8px; font-size:0.85rem; margin-top:10px;}
+  .dot{width:8px; height:8px; border-radius:50%; background:var(--amber); flex-shrink:0;}
+
+  /* placeholder tiles (gallery) */
+  .ph-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .ph-tile{aspect-ratio:1/1; background:linear-gradient(155deg,#3454D1,#181B22); border-radius:6px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;}
+  .ph-tile svg{width:36%; height:36%; stroke:#fff; opacity:0.55; fill:none; stroke-width:1.2;}
+  .ph-tile span{position:absolute; bottom:6px; left:8px; right:8px; color:#fff; font-size:0.68rem; opacity:0.85;}
+
+  /* carousel */
+  .carousel{position:relative; overflow:hidden; border-radius:8px;}
+  .carousel-track{display:flex; transition:transform .4s ease;}
+  .carousel-slide{min-width:100%; aspect-ratio:16/9; background:linear-gradient(155deg,#3454D1,#181B22); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:1.1rem;}
+  .carousel-nav{position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,255,255,0.85); font-size:1rem; display:flex; align-items:center; justify-content:center;}
+  .carousel-nav.prev{left:8px;} .carousel-nav.next{right:8px;}
+  .carousel-dots{display:flex; justify-content:center; gap:6px; margin-top:10px;}
+  .carousel-dots button{width:7px; height:7px; border-radius:50%; border:none; background:var(--border); padding:0;}
+  .carousel-dots button.active{background:var(--accent);}
+
+  /* accordion */
+  .accordion-item{border-bottom:1px solid var(--border);}
+  .accordion-item:last-child{border-bottom:none;}
+  .accordion-q{width:100%; text-align:left; background:none; border:none; padding:12px 0; font-weight:600; font-size:0.9rem; display:flex; justify-content:space-between; align-items:center;}
+  .accordion-a{max-height:0; overflow:hidden; transition:max-height .3s ease; font-size:0.86rem; color:var(--muted); padding:0;}
+  .accordion-item.open .accordion-a{max-height:200px; padding-bottom:12px;}
+  .accordion-item.open .accordion-q .chev{transform:rotate(180deg);}
+  .chev{transition:transform .25s ease;}
+
+  /* testimonials */
+  .testi{background:var(--bg); border-radius:8px; padding:14px; margin-bottom:10px; font-size:0.87rem;}
+  .testi strong{display:block; font-size:0.82rem; margin-top:6px;}
+  .stars{color:#D9A02A; font-size:0.85rem;}
+
+  /* menu */
+  .menu-list{list-style:none; margin:0; padding:0;}
+  .menu-list li{display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px dashed var(--border); font-size:0.88rem;}
+  .menu-list li:last-child{border-bottom:none;}
+  .menu-cat{font-size:0.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:14px 0 4px;}
+  .menu-cat:first-child{margin-top:0;}
+
+  /* catalog */
+  .catalog-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  .product-card{border:1px solid var(--border); border-radius:8px; padding:10px; text-align:center;}
+  .product-card .ph-swatch{aspect-ratio:1/1; background:var(--bg); border-radius:6px; margin-bottom:8px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.4rem;}
+  .product-card h4{font-size:0.84rem; margin-bottom:2px;}
+  .product-card .price{font-size:0.82rem; color:var(--muted); margin-bottom:8px;}
+  .filter-bar{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;}
+  .filter-chip{padding:6px 12px; border-radius:999px; border:1px solid var(--border); background:#fff; font-size:0.78rem;}
+  .filter-chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  /* quiz */
+  .quiz-opt{display:block; width:100%; text-align:left; padding:9px 12px; border:1px solid var(--border); border-radius:6px; background:#fff; margin-bottom:6px; font-size:0.86rem;}
+  .quiz-opt.correct{background:var(--pass-bg); border-color:var(--pass);}
+  .quiz-opt.wrong{background:var(--fail-bg); border-color:var(--fail);}
+
+  /* multistep */
+  .step-progress{display:flex; gap:6px; margin-bottom:16px;}
+  .step-progress span{flex:1; height:4px; background:var(--border); border-radius:2px;}
+  .step-progress span.done{background:var(--accent);}
+  .step-pane{display:none;}
+  .step-pane.active{display:block;}
+
+  /* calculator */
+  .calc-display{background:#181B22; color:#fff; font-family:var(--mono); font-size:1.3rem; text-align:right; padding:12px 14px; border-radius:8px 8px 0 0;}
+  .calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; background:var(--bg); padding:8px; border-radius:0 0 8px 8px;}
+  .calc-grid button{padding:12px 0; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:0.95rem;}
+  .calc-grid button.op{background:var(--accent); color:#fff; border-color:var(--accent);}
+
+  /* login btn */
+  .google-btn{display:inline-flex; align-items:center; gap:10px; padding:9px 16px; border:1px solid var(--border); border-radius:6px; background:#fff; font-size:0.88rem; font-weight:600;}
+
+  hr.sep{border:none; border-top:1px solid var(--border); margin:14px 0;}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="top">
+    <div>
+      <div class="app-title">🧪 Site <span>Debug</span></div>
+      <div class="app-sub">Central de testes — clique em ✓ ou ✗ ao lado de cada componente</div>
+    </div>
+    <div class="progress-pill" id="progressPill">0 de 31 testados</div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tests">Componentes</button>
+    <button class="tab-btn" data-tab="passed">✅ Funcionaram <span class="count" id="countPass">(0)</span></button>
+    <button class="tab-btn" data-tab="failed">❌ Não funcionaram <span class="count" id="countFail">(0)</span></button>
+  </div>
+</header>
+
+<!-- ================= TAB: TESTS ================= -->
+<div class="tab-panel active" id="panel-tests">
+  <div class="panel-inner">
+
+    <h2 class="category-head">📞 Contato &amp; Comunicação</h2>
+    <div class="tests-grid">
+
+      <article class="test-card" data-id="whatsapp-cta">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">01</span>WhatsApp com mensagem personalizada</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="field-row"><label for="wa-name">Seu nome (opcional)</label><input type="text" id="wa-name" placeholder="Ex: Davi"></div>
+          <a class="btn btn-whatsapp btn-block" id="wa-link" href="https://wa.me/5547999592800?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es." target="_blank" rel="noopener">💬 Chamar no WhatsApp</a>
+          <p class="test-hint">Número: (47) 99959-2800. Digite um nome acima e o link atualiza a mensagem.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="social-links">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">02</span>Links para Instagram / Facebook</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <a class="btn btn-block" href="https://www.instagram.com/pirex.dav/" target="_blank" rel="noopener" style="margin-bottom:8px;">📷 Instagram — @pirex.dav</a>
+          <button class="btn btn-block" disabled style="opacity:0.55; cursor:not-allowed;">📘 Facebook — link não informado</button>
+          <p class="test-hint">Facebook não foi informado no briefing; troque o botão desabilitado pelo link real quando tiver.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="google-maps">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">03</span>Google Maps incorporado</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <iframe height="220" loading="lazy" src="https://www.google.com/maps?q=Rua+Felix+Malburg+497,+Itajai+SC&output=embed"></iframe>
+          <p class="test-hint">Endereço: Rua Félix Malburg, 497 — Itajaí/SC. Precisa de internet pra carregar (não funciona offline).</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="form-email">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">04</span>Formulário de contato → e-mail</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <form action="https://formsubmit.co/davippires14@gmail.com" method="POST">
+            <input type="hidden" name="_subject" value="Novo contato — Site Debug">
+            <input type="hidden" name="_captcha" value="false">
+            <div class="field-row"><label>Nome</label><input type="text" name="nome" required></div>
+            <div class="field-row"><label>E-mail</label><input type="email" name="email" required></div>
+            <div class="field-row"><label>Mensagem</label><textarea name="mensagem" rows="2" required></textarea></div>
+            <button type="submit" class="btn btn-accent btn-block">Enviar por e-mail</button>
+          </form>
+          <p class="test-hint">Usa FormSubmit.co (sem backend). No 1º envio o Gmail recebe um e-mail de confirmação — é assim que o serviço funciona.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="form-whatsapp">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">05</span>Formulário → WhatsApp</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <form id="form-to-wa">
+            <div class="field-row"><label>Nome</label><input type="text" id="fw-nome" required></div>
+            <div class="field-row"><label>O que você precisa?</label><textarea id="fw-msg" rows="2" required></textarea></div>
+            <button type="submit" class="btn btn-whatsapp btn-block">Enviar via WhatsApp</button>
+          </form>
+          <p class="test-hint">Monta a mensagem com os campos e abre o WhatsApp (47 99959-2800).</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="call-now">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">06</span>Botão "ligar agora"</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <a class="btn btn-accent btn-block" href="tel:+5547999592800">📞 Ligar agora — (47) 99959-2800</a>
+          <p class="test-hint">Em celular abre o discador. No computador, depende do app padrão configurado.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="google-reviews">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">07</span>Google Reviews incorporado</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:1.6rem;font-weight:700;">4.8</span>
+            <span class="stars">★★★★★</span>
+            <span class="test-hint" style="margin:0;">exemplo ilustrativo</span>
+          </div>
+          <div class="testi">"Atendimento ótimo e produtos de qualidade, virou parada certa quando estou na Brava."<strong>— cliente Google (exemplo)</strong></div>
+          <div class="testi">"Ambiente agradável e opções sem glúten bem variadas."<strong>— cliente Google (exemplo)</strong></div>
+          <p class="test-hint">Baseado na loja Nowheat (Riviera Business &amp; Mall, Praia Brava). Não achei a nota/comentários reais via busca — um widget ao vivo de verdade precisa da Google Places API com faturamento ativado.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+    </div>
+
+    <h2 class="category-head">🖼️ Conteúdo &amp; Mídia</h2>
+    <div class="tests-grid">
+
+      <article class="test-card" data-id="faq">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">08</span>FAQ expansível</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body" id="faq-list">
+          <div class="accordion-item">
+            <button class="accordion-q">Vocês entregam em toda a cidade? <span class="chev">▾</span></button>
+            <div class="accordion-a">Sim, entregamos em toda a região metropolitana em até 48h.</div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-q">Quais formas de pagamento? <span class="chev">▾</span></button>
+            <div class="accordion-a">Pix, cartão de crédito/débito e dinheiro na entrega.</div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-q">Posso agendar um orçamento? <span class="chev">▾</span></button>
+            <div class="accordion-a">Pode sim — use o formulário ou o botão de WhatsApp acima.</div>
+          </div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="gallery">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">09</span>Galeria de fotos (placeholders)</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="ph-grid">
+            <div class="ph-tile"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M4 17l5-5 4 4 3-3 4 4" fill="none"/></svg><span>Foto 1</span></div>
+            <div class="ph-tile"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M4 17l5-5 4 4 3-3 4 4" fill="none"/></svg><span>Foto 2</span></div>
+            <div class="ph-tile"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="9" cy="10" r="1.4" fill="currentColor" stroke="none"/><path d="M4 17l5-5 4 4 3-3 4 4" fill="none"/></svg><span>Foto 3</span></div>
+          </div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="carousel">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">10</span>Carrossel de imagens</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="carousel">
+            <div class="carousel-track" id="carousel-track">
+              <div class="carousel-slide">Slide 1</div>
+              <div class="carousel-slide">Slide 2</div>
+              <div class="carousel-slide">Slide 3</div>
+            </div>
+            <button class="carousel-nav prev" id="carousel-prev">‹</button>
+            <button class="carousel-nav next" id="carousel-next">›</button>
+          </div>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="testimonials">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">11</span>Depoimentos (fictícios)</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="testi"><span class="stars">★★★★★</span><br>"Superou minhas expectativas, recomendo demais!"<strong>Fernanda M.</strong></div>
+          <div class="testi"><span class="stars">★★★★★</span><br>"Serviço rápido e time super atencioso do início ao fim."<strong>Rodrigo A.</strong></div>
+          <div class="testi"><span class="stars">★★★★☆</span><br>"Bom custo-benefício, só demorou um pouco mais que o combinado."<strong>Camila S.</strong></div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="youtube">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">12</span>YouTube / Vimeo incorporado</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <iframe height="180" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Vídeo de exemplo" loading="lazy" allowfullscreen></iframe>
+          <p class="test-hint">⚠️ Não achei com certeza qual "JJ" você quis dizer (há vários criadores com esse apelido) — troquei por um vídeo de exemplo. Me manda o link do vídeo/canal certo que eu troco.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+    </div>
+
+    <h2 class="category-head">🛍️ Comércio &amp; Orçamento</h2>
+    <div class="tests-grid">
+
+      <article class="test-card" data-id="menu">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">13</span>Menu / cardápio (fictício)</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="menu-cat">Entradas</div>
+          <ul class="menu-list"><li><span>Bolinho de bacalhau (6un)</span><span>R$ 32</span></li><li><span>Bruschetta caprese</span><span>R$ 28</span></li></ul>
+          <div class="menu-cat">Principais</div>
+          <ul class="menu-list"><li><span>Risoto de camarão</span><span>R$ 68</span></li><li><span>Filé ao molho madeira</span><span>R$ 74</span></li></ul>
+          <div class="menu-cat">Bebidas</div>
+          <ul class="menu-list"><li><span>Suco natural</span><span>R$ 12</span></li></ul>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="catalog">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">14</span>Catálogo de produtos (fictício)</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="catalog-grid">
+            <div class="product-card"><div class="ph-swatch">📦</div><h4>Kit Essencial</h4><div class="price">R$ 149</div><button class="btn btn-block" style="font-size:0.78rem;">Ver detalhes</button></div>
+            <div class="product-card"><div class="ph-swatch">📦</div><h4>Kit Premium</h4><div class="price">R$ 279</div><button class="btn btn-block" style="font-size:0.78rem;">Ver detalhes</button></div>
+          </div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="quote-buttons">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">15</span>Botões de orçamento (produtos simulados)</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="product-card" style="text-align:left; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span>Instalação padrão</span>
+            <button class="btn btn-accent quote-btn" data-item="Instalação padrão" style="font-size:0.78rem;">Pedir orçamento</button>
+          </div>
+          <div class="product-card" style="text-align:left; display:flex; justify-content:space-between; align-items:center;">
+            <span>Manutenção mensal</span>
+            <button class="btn btn-accent quote-btn" data-item="Manutenção mensal" style="font-size:0.78rem;">Pedir orçamento</button>
+          </div>
+          <p class="test-hint" id="quote-feedback"></p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="custom-quote">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">16</span>Área de orçamento personalizada</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="field-row"><label>Serviço</label>
+            <select id="cq-service">
+              <option value="200">Consultoria (R$200)</option>
+              <option value="450">Projeto completo (R$450)</option>
+            </select>
+          </div>
+          <div class="field-row"><label>Quantidade</label><input type="number" id="cq-qty" value="1" min="1"></div>
+          <label style="font-size:0.85rem;"><input type="checkbox" id="cq-extra"> Adicionar suporte prioritário (+R$80)</label>
+          <hr class="sep">
+          <div style="display:flex; justify-content:space-between; font-weight:700;"><span>Total estimado</span><span id="cq-total">R$ 200</span></div>
+          <a class="btn btn-whatsapp btn-block" id="cq-send" style="margin-top:10px;" target="_blank" rel="noopener">Enviar orçamento via WhatsApp</a>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="calculator">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">17</span>Calculadora simples</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="calc-display" id="calc-display">0</div>
+          <div class="calc-grid" id="calc-grid">
+            <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button class="op" data-k="/">÷</button>
+            <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button class="op" data-k="*">×</button>
+            <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button class="op" data-k="-">−</button>
+            <button data-k="0">0</button><button data-k=".">.</button><button class="op" data-k="c">C</button><button class="op" data-k="=">=</button>
+          </div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="catalog-filters">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">18</span>Catálogo com filtros</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="filter-bar" id="filter-bar">
+            <button class="filter-chip active" data-f="todos">Todos</button>
+            <button class="filter-chip" data-f="bebidas">Bebidas</button>
+            <button class="filter-chip" data-f="comidas">Comidas</button>
+          </div>
+          <div class="catalog-grid" id="filter-grid">
+            <div class="product-card" data-cat="bebidas"><div class="ph-swatch">🥤</div><h4>Suco Natural</h4><div class="price">R$ 12</div></div>
+            <div class="product-card" data-cat="comidas"><div class="ph-swatch">🥗</div><h4>Salada Fresca</h4><div class="price">R$ 24</div></div>
+            <div class="product-card" data-cat="bebidas"><div class="ph-swatch">☕</div><h4>Café Especial</h4><div class="price">R$ 9</div></div>
+            <div class="product-card" data-cat="comidas"><div class="ph-swatch">🍰</div><h4>Bolo do dia</h4><div class="price">R$ 14</div></div>
+          </div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+    </div>
+
+    <h2 class="category-head">🎮 Interatividade &amp; Agendamento</h2>
+    <div class="tests-grid">
+
+      <article class="test-card" data-id="quiz">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">19</span>Quiz / interativo</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body" id="quiz-box">
+          <p style="font-weight:600; font-size:0.88rem; margin-bottom:8px;">Qual desses é o principal benefício de um site rápido?</p>
+          <button class="quiz-opt" data-correct="false">Deixa o design mais colorido</button>
+          <button class="quiz-opt" data-correct="true">Melhora experiência e SEO</button>
+          <button class="quiz-opt" data-correct="false">Aumenta o tamanho do arquivo</button>
+          <p class="test-hint" id="quiz-result"></p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="ext-calendar">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">20</span>Calendário externo incorporado</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <iframe height="220" src="https://calendar.google.com/calendar/embed?src=en.brazilian%23holiday%40group.v.calendar.google.com&ctz=America%2FSao_Paulo" loading="lazy"></iframe>
+          <p class="test-hint">Exemplo com o calendário público de feriados do Google. Precisa de internet.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="ext-scheduling">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">21</span>Agendamento via ferramenta externa</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <a class="btn btn-accent btn-block" href="https://calendly.com" target="_blank" rel="noopener">📅 Agendar horário (Calendly)</a>
+          <p class="test-hint">Link genérico — troque pela sua página real do Calendly (ou similar) quando tiver conta.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="multistep-form">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">22</span>Formulário com várias etapas</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="step-progress"><span class="done" data-s="1"></span><span data-s="2"></span><span data-s="3"></span></div>
+          <div class="step-pane active" data-step="1">
+            <div class="field-row"><label>Nome</label><input type="text" id="ms-nome"></div>
+            <button class="btn btn-accent btn-block ms-next">Próximo</button>
+          </div>
+          <div class="step-pane" data-step="2">
+            <div class="field-row"><label>O que você precisa?</label><input type="text" id="ms-projeto"></div>
+            <button class="btn btn-block ms-back">Voltar</button>
+            <button class="btn btn-accent btn-block ms-next" style="margin-top:6px;">Próximo</button>
+          </div>
+          <div class="step-pane" data-step="3">
+            <p style="font-size:0.88rem;" id="ms-summary">Resumo aparece aqui.</p>
+            <button class="btn btn-block ms-back">Voltar</button>
+            <button class="btn btn-accent btn-block" id="ms-finish" style="margin-top:6px;">Concluir</button>
+          </div>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="internal-search">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">23</span>Busca interna</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <input type="text" id="search-input" placeholder="Buscar página..." style="width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; margin-bottom:10px;">
+          <ul class="menu-list" id="search-list">
+            <li><span>Sobre nós</span></li>
+            <li><span>Serviços</span></li>
+            <li><span>Perguntas frequentes</span></li>
+            <li><span>Política de privacidade</span></li>
+            <li><span>Contato</span></li>
+          </ul>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="external-login">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">24</span>Login através de serviço externo</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <button class="google-btn" id="google-login">
+            <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.7 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.5 29.5 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.9-3.5z"/></svg>
+            Entrar com Google
+          </button>
+          <p class="test-hint" id="login-hint">Demo de UI — em produção abriria o OAuth real do Google.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="api-integration">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">25</span>Integração com API (ViaCEP)</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="field-row"><label>Digite um CEP</label><input type="text" id="cep-input" placeholder="88306-001" maxlength="9"></div>
+          <button class="btn btn-accent btn-block" id="cep-btn">Buscar endereço</button>
+          <p class="test-hint" id="cep-result">Essa é uma chamada real à API pública ViaCEP — precisa de internet.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+    </div>
+
+    <h2 class="category-head">📈 Marketing, SEO &amp; Infraestrutura</h2>
+    <div class="tests-grid">
+
+      <article class="test-card" data-id="analytics">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">26</span>Google Analytics</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="code-block">&lt;script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"&gt;&lt;/script&gt;
+&lt;script&gt;
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXX');
+&lt;/script&gt;</div>
+          <p class="test-hint">Troque G-XXXXXXX pelo ID real da sua propriedade GA4 e cole no &lt;head&gt;.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="pixel-meta">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">27</span>Pixel / Meta</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="code-block">&lt;script&gt;
+  !function(f,b,e,v,n,t,s){...}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'SEU_PIXEL_ID');
+  fbq('track', 'PageView');
+&lt;/script&gt;</div>
+          <p class="test-hint">Snippet resumido — pegue o código completo no Gerenciador de Eventos do Meta.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="seo-basic">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">28</span>SEO básico</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <div class="code-block">&lt;title&gt;Site Debug — Central de Testes&lt;/title&gt;
+&lt;meta name="description" content="..."&gt;
+&lt;meta property="og:title" content="..."&gt;
+&lt;meta property="og:image" content="..."&gt;
+&lt;link rel="canonical" href="..."&gt;</div>
+          <p class="test-hint">Já incluído no &lt;head&gt; desta página (title + description). Ajuste og:title/og:image pro seu domínio real.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="favicon">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">29</span>Favicon</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body" style="display:flex; align-items:center; gap:14px;">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%233454D1'/%3E%3Cpath d='M25 52l18 18 32-38' stroke='white' stroke-width='10' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" width="40" height="40">
+          <p class="test-hint" style="margin:0;">Olhe a aba do navegador — esse ícone azul com check deve aparecer lá.</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="sitemap">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">30</span>Sitemap</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <a class="btn btn-block" href="sitemap.xml" target="_blank" rel="noopener">📄 Ver sitemap.xml</a>
+          <p class="test-hint">Abre o arquivo sitemap.xml (precisa estar na mesma pasta ao hospedar).</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+      <article class="test-card" data-id="privacy-page">
+        <header class="test-head">
+          <div class="test-title"><span class="test-num">31</span>Página de política de privacidade</div>
+          <div class="test-controls"><button class="chk chk-pass" data-status="pass">✓</button><button class="chk chk-fail" data-status="fail">✗</button></div>
+        </header>
+        <div class="test-body">
+          <a class="btn btn-block" href="privacidade.html" target="_blank" rel="noopener">🔒 Ver política de privacidade</a>
+          <p class="test-hint">Abre uma página separada (precisa estar na mesma pasta ao hospedar).</p>
+        </div>
+        <div class="test-note"><textarea placeholder="O que não funcionou?"></textarea></div>
+      </article>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= TAB: PASSED ================= -->
+<div class="tab-panel" id="panel-passed">
+  <div class="panel-inner" id="passed-content"></div>
+</div>
+
+<!-- ================= TAB: FAILED ================= -->
+<div class="tab-panel" id="panel-failed">
+  <div class="panel-inner" id="failed-content"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var STATE_KEY = 'sitedebug_status';
+
+  function loadState(){
+    try{ return JSON.parse(localStorage.getItem(STATE_KEY)) || {}; }catch(e){ return {}; }
+  }
+  function saveState(state){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.test-card'));
+  var state = loadState();
+
+  function titleOf(card){
+    var t = card.querySelector('.test-title').textContent;
+    return t.replace(/^\s*\d+\s*/, '').trim();
+  }
+
+  function applyCardVisual(card){
+    var id = card.dataset.id;
+    var s = state[id] || {};
+    card.classList.remove('is-pass','is-fail');
+    if(s.status === 'pass') card.classList.add('is-pass');
+    if(s.status === 'fail') card.classList.add('is-fail');
+    var ta = card.querySelector('.test-note textarea');
+    if(ta && s.note) ta.value = s.note;
+  }
+
+  function updateProgress(){
+    var total = cards.length;
+    var done = cards.filter(function(c){ var s = state[c.dataset.id]; return s && s.status; }).length;
+    var passCount = cards.filter(function(c){ var s = state[c.dataset.id]; return s && s.status === 'pass'; }).length;
+    var failCount = cards.filter(function(c){ var s = state[c.dataset.id]; return s && s.status === 'fail'; }).length;
+    document.getElementById('progressPill').textContent = done + ' de ' + total + ' testados';
+    document.getElementById('countPass').textContent = '(' + passCount + ')';
+    document.getElementById('countFail').textContent = '(' + failCount + ')';
+  }
+
+  function renderSummaries(){
+    var passedEl = document.getElementById('passed-content');
+    var failedEl = document.getElementById('failed-content');
+
+    var passedCards = cards.filter(function(c){ var s = state[c.dataset.id]; return s && s.status === 'pass'; });
+    var failedCards = cards.filter(function(c){ var s = state[c.dataset.id]; return s && s.status === 'fail'; });
+
+    if(passedCards.length === 0){
+      passedEl.innerHTML = '<p class="summary-empty">Nenhum componente marcado como funcionando ainda.</p>';
+    } else {
+      passedEl.innerHTML = '<h3 style="margin-bottom:16px;">✅ Componentes que funcionaram (' + passedCards.length + ')</h3>' +
+        passedCards.map(function(c){
+          return '<div class="summary-item"><span>' + titleOf(c) + '</span><span class="summary-badge pass">OK</span></div>';
+        }).join('');
+    }
+
+    if(failedCards.length === 0){
+      failedEl.innerHTML = '<p class="summary-empty">Nenhum componente marcado como problema ainda.</p>';
+    } else {
+      failedEl.innerHTML = '<h3 style="margin-bottom:16px;">❌ Componentes que não funcionaram (' + failedCards.length + ')</h3>' +
+        failedCards.map(function(c){
+          var s = state[c.dataset.id] || {};
+          var note = (s.note || '').trim();
+          return '<div class="summary-item fail-item"><div style="display:flex; justify-content:space-between;"><span>' + titleOf(c) + '</span><span class="summary-badge fail">FALHOU</span></div>' +
+            '<div class="fail-note' + (note ? '' : ' empty') + '">' + (note ? note.replace(/</g,'&lt;') : 'Nenhuma descrição foi escrita ainda.') + '</div></div>';
+        }).join('');
+    }
+  }
+
+  function refreshAll(){
+    cards.forEach(applyCardVisual);
+    updateProgress();
+    renderSummaries();
+  }
+
+  cards.forEach(function(card){
+    var id = card.dataset.id;
+    var passBtn = card.querySelector('.chk-pass');
+    var failBtn = card.querySelector('.chk-fail');
+    var ta = card.querySelector('.test-note textarea');
+
+    passBtn.addEventListener('click', function(){
+      state[id] = { status: 'pass', note: (state[id] && state[id].note) || '' };
+      saveState(state);
+      refreshAll();
+    });
+    failBtn.addEventListener('click', function(){
+      state[id] = { status: 'fail', note: (state[id] && state[id].note) || '' };
+      saveState(state);
+      refreshAll();
+      if(ta) ta.focus();
+    });
+    if(ta){
+      ta.addEventListener('input', function(){
+        if(!state[id]) state[id] = { status: 'fail', note:'' };
+        state[id].note = ta.value;
+        saveState(state);
+      });
+      ta.addEventListener('blur', renderSummaries);
+    }
+  });
+
+  refreshAll();
+
+  /* ---------- Tabs ---------- */
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab !== 'tests') renderSummaries();
+    });
+  });
+
+  /* ================= COMPONENT DEMOS ================= */
+
+  /* WhatsApp personalizado */
+  var waName = document.getElementById('wa-name');
+  var waLink = document.getElementById('wa-link');
+  waName.addEventListener('input', function(){
+    var base = 'Olá! ';
+    var name = waName.value.trim();
+    var msg = name ? ('Meu nome é ' + name + '. Vim pelo site e gostaria de mais informações.') : 'Vim pelo site e gostaria de mais informações.';
+    waLink.href = 'https://wa.me/5547999592800?text=' + encodeURIComponent(base + msg);
+  });
+
+  /* Formulário -> WhatsApp */
+  document.getElementById('form-to-wa').addEventListener('submit', function(e){
+    e.preventDefault();
+    var nome = document.getElementById('fw-nome').value.trim();
+    var msg = document.getElementById('fw-msg').value.trim();
+    var text = 'Olá! Nome: ' + nome + '. Preciso de: ' + msg;
+    window.open('https://wa.me/5547999592800?text=' + encodeURIComponent(text), '_blank');
+  });
+
+  /* Accordion FAQ */
+  document.querySelectorAll('#faq-list .accordion-q').forEach(function(q){
+    q.addEventListener('click', function(){
+      q.parentElement.classList.toggle('open');
+    });
+  });
+
+  /* Carousel */
+  var track = document.getElementById('carousel-track');
+  var slides = track.children.length;
+  var dotsWrap = document.getElementById('carousel-dots');
+  var current = 0;
+  for(var i=0;i<slides;i++){
+    var d = document.createElement('button');
+    if(i===0) d.className='active';
+    d.addEventListener('click', (function(idx){ return function(){ goTo(idx); }; })(i));
+    dotsWrap.appendChild(d);
+  }
+  function goTo(idx){
+    current = (idx + slides) % slides;
+    track.style.transform = 'translateX(-' + (current*100) + '%)';
+    Array.prototype.forEach.call(dotsWrap.children, function(d,i){ d.className = i===current ? 'active' : ''; });
+  }
+  document.getElementById('carousel-prev').addEventListener('click', function(){ goTo(current-1); });
+  document.getElementById('carousel-next').addEventListener('click', function(){ goTo(current+1); });
+
+  /* Quiz */
+  document.querySelectorAll('#quiz-box .quiz-opt').forEach(function(opt){
+    opt.addEventListener('click', function(){
+      var correct = opt.dataset.correct === 'true';
+      document.querySelectorAll('#quiz-box .quiz-opt').forEach(function(o){ o.disabled = true; });
+      opt.classList.add(correct ? 'correct' : 'wrong');
+      document.getElementById('quiz-result').textContent = correct ? 'Acertou! 🎉' : 'Não foi dessa vez — a certa era "Melhora experiência e SEO".';
+    });
+  });
+
+  /* Quote buttons */
+  document.querySelectorAll('.quote-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.getElementById('quote-feedback').textContent = 'Orçamento solicitado para: "' + btn.dataset.item + '". (simulação — normalmente isso abriria um formulário ou o WhatsApp)';
+    });
+  });
+
+  /* Custom quote calculator */
+  var cqService = document.getElementById('cq-service');
+  var cqQty = document.getElementById('cq-qty');
+  var cqExtra = document.getElementById('cq-extra');
+  var cqTotal = document.getElementById('cq-total');
+  var cqSend = document.getElementById('cq-send');
+  function updateQuote(){
+    var base = parseFloat(cqService.value) || 0;
+    var qty = parseInt(cqQty.value) || 1;
+    var extra = cqExtra.checked ? 80 : 0;
+    var total = base*qty + extra;
+    cqTotal.textContent = 'R$ ' + total.toFixed(0);
+    var label = cqService.options[cqService.selectedIndex].text;
+    var text = 'Olá! Quero um orçamento: ' + label + ', quantidade ' + qty + (cqExtra.checked ? ' + suporte prioritário' : '') + '. Total estimado: R$ ' + total.toFixed(0);
+    cqSend.href = 'https://wa.me/5547999592800?text=' + encodeURIComponent(text);
+  }
+  [cqService, cqQty, cqExtra].forEach(function(el){ el.addEventListener('input', updateQuote); el.addEventListener('change', updateQuote); });
+  updateQuote();
+
+  /* Calculator */
+  var calcDisplay = document.getElementById('calc-display');
+  var calcExpr = '';
+  document.getElementById('calc-grid').addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if(!btn) return;
+    var k = btn.dataset.k;
+    if(k === 'c'){ calcExpr = ''; }
+    else if(k === '='){
+      try{ calcExpr = String(Function('"use strict";return (' + calcExpr + ')')()); }
+      catch(err){ calcExpr = 'Erro'; }
+    } else {
+      calcExpr += k;
+    }
+    calcDisplay.textContent = calcExpr || '0';
+  });
+
+  /* Catalog filters */
+  document.getElementById('filter-bar').addEventListener('click', function(e){
+    var chip = e.target.closest('.filter-chip');
+    if(!chip) return;
+    document.querySelectorAll('#filter-bar .filter-chip').forEach(function(c){ c.classList.remove('active'); });
+    chip.classList.add('active');
+    var f = chip.dataset.f;
+    document.querySelectorAll('#filter-grid .product-card').forEach(function(card){
+      card.style.display = (f === 'todos' || card.dataset.cat === f) ? '' : 'none';
+    });
+  });
+
+  /* Multistep form */
+  var steps = document.querySelectorAll('.step-pane');
+  var progressDots = document.querySelectorAll('.step-progress span');
+  function showStep(n){
+    steps.forEach(function(s){ s.classList.toggle('active', s.dataset.step == n); });
+    progressDots.forEach(function(d){ d.classList.toggle('done', d.dataset.s <= n); });
+  }
+  document.querySelectorAll('.ms-next').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var cur = btn.closest('.step-pane').dataset.step;
+      showStep(parseInt(cur)+1);
+      if(cur == 2){
+        document.getElementById('ms-summary').textContent = 'Nome: ' + document.getElementById('ms-nome').value + ' — Projeto: ' + document.getElementById('ms-projeto').value;
+      }
+    });
+  });
+  document.querySelectorAll('.ms-back').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var cur = btn.closest('.step-pane').dataset.step;
+      showStep(parseInt(cur)-1);
+    });
+  });
+  document.getElementById('ms-finish').addEventListener('click', function(){
+    document.getElementById('ms-summary').textContent = 'Enviado! (simulação)';
+  });
+
+  /* Internal search */
+  document.getElementById('search-input').addEventListener('input', function(){
+    var q = this.value.toLowerCase();
+    document.querySelectorAll('#search-list li').forEach(function(li){
+      li.style.display = li.textContent.toLowerCase().indexOf(q) > -1 ? '' : 'none';
+    });
+  });
+
+  /* External login demo */
+  document.getElementById('google-login').addEventListener('click', function(){
+    document.getElementById('login-hint').textContent = 'Em produção, isso abriria o login OAuth real do Google.';
+  });
+
+  /* ViaCEP API integration */
+  document.getElementById('cep-btn').addEventListener('click', function(){
+    var cep = document.getElementById('cep-input').value.replace(/\D/g,'');
+    var out = document.getElementById('cep-result');
+    if(cep.length !== 8){ out.textContent = 'Digite um CEP válido (8 dígitos).'; return; }
+    out.textContent = 'Buscando...';
+    fetch('https://viacep.com.br/ws/' + cep + '/json/')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(data.erro){ out.textContent = 'CEP não encontrado.'; return; }
+        out.textContent = data.logradouro + ', ' + data.bairro + ' — ' + data.localidade + '/' + data.uf;
+      })
+      .catch(function(){ out.textContent = 'Erro ao buscar (verifique sua internet).'; });
+  });
+
+})();
+</script>
+</body>
+</html>
